@@ -6,14 +6,18 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"sort"
 	"strings"
+	"time"
 )
 
 type FileEntry struct {
 	Name    string
 	IsImage bool
 	IsVideo bool
+	ModTime time.Time
 }
 
 var tmpl = template.Must(template.New("index").Parse(`
@@ -84,7 +88,6 @@ var tmpl = template.Must(template.New("index").Parse(`
     max-width: 100%;
     max-height: 100%;
     object-fit: contain;
-    pointer-events: none;
   }
   #lightbox video { max-width: 100%; max-height: 100%; }
   #lightbox .close {
@@ -95,6 +98,8 @@ var tmpl = template.Must(template.New("index").Parse(`
     cursor: pointer;
     z-index: 1001;
   }
+  #lightbox-img { transition: transform 0.15s ease; cursor: zoom-in; }
+  #lightbox-img.zoomed { object-fit: none; max-width: none; max-height: none; cursor: zoom-out; }
   #lightbox .nav {
     position: absolute;
     top: 0; bottom: 0;
@@ -129,7 +134,7 @@ var tmpl = template.Must(template.New("index").Parse(`
     {{if $f.IsImage}}
       <img src="{{$f.Name}}" loading="lazy" onclick="openLightbox('{{$f.Name}}')">
     {{else if $f.IsVideo}}
-      <video src="{{$f.Name}}" muted onclick="openLightbox('{{$f.Name}}')"></video>
+      <img src="/thumbs/{{$f.Name}}.jpg" muted onclick="openLightbox('{{$f.Name}}')">
     {{end}}
     <a class="filename" href="{{$f.Name}}">{{$f.Name}}</a>
   </div>
@@ -145,9 +150,28 @@ var tmpl = template.Must(template.New("index").Parse(`
   <span class="name" id="lightbox-name"></span>
 </div>
 
+<select onchange="location.href='?sort='+this.value">
+  <option value="name">Name</option>
+  <option value="date">Date Modified</option>
+</select>
+
 <script>
   const items = [{{range .Files}}{{if or .IsImage .IsVideo}}{name:"{{.Name}}", video:{{.IsVideo}}},{{end}}{{end}}];
   let currentIndex = 0;
+  let zoomed = false;
+
+  const lbImg = document.getElementById('lightbox-img');
+  lbImg.addEventListener('dblclick', () => {
+    zoomed = !zoomed;
+    lbImg.classList.toggle('zoomed', zoomed);
+  });
+  lbImg.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    const scale = e.deltaY < 0 ? 1.1 : 0.9;
+    const current = lbImg.style.transform.match(/scale\(([\d.]+)\)/);
+    const newScale = Math.max(1, (current ? parseFloat(current[1]) : 1) * scale);
+    lbImg.style.transform = 'scale(' + newScale + ')';
+  });
 
   function openLightbox(name) {
     currentIndex = items.findIndex(i => i.name === name);
@@ -228,10 +252,27 @@ func handler(root string) http.HandlerFunc {
 		var files []FileEntry
 		for _, e := range entries {
 			ext := strings.ToLower(filepath.Ext(e.Name()))
+			info, err := e.Info()
+			if err != nil {
+				continue
+			}
 			files = append(files, FileEntry{
 				Name:    e.Name(),
 				IsImage: imageExts[ext],
 				IsVideo: videoExts[ext],
+				ModTime: info.ModTime(),
+			})
+		}
+
+		sortBy := r.URL.Query().Get("sort")
+		switch sortBy {
+		case "date":
+			sort.Slice(files, func(i, j int) bool {
+				return files[i].ModTime.After(files[j].ModTime)
+			})
+		default:
+			sort.Slice(files, func(i, j int) bool {
+				return files[i].Name < files[j].Name
 			})
 		}
 
@@ -242,6 +283,25 @@ func handler(root string) http.HandlerFunc {
 	}
 }
 
+func thumbHandler(root, thumbDir string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		name := strings.TrimPrefix(r.URL.Path, "/thumbs/")
+		videoPath := filepath.Join(root, strings.TrimSuffix(name, ".jpg"))
+		thumbPath := filepath.Join(thumbDir, name)
+
+		if _, err := os.Stat(thumbPath); os.IsNotExist(err) {
+			os.MkdirAll(thumbDir, 0755)
+			cmd := exec.Command("ffmpeg", "-ss", "00:00:01", "-i", videoPath,
+				"-frames:v", "1", "-vf", "scale=320:-1", thumbPath)
+			if err := cmd.Run(); err != nil {
+				http.Error(w, "thumb generation failed", 500)
+				return
+			}
+		}
+		http.ServeFile(w, r, thumbPath)
+	}
+}
+
 func main() {
 	dir := flag.String("dir", ".", "folder to serve")
 	port := flag.String("port", "8080", "port to listen on")
@@ -249,6 +309,7 @@ func main() {
 
 	absDir, _ := filepath.Abs(*dir)
 	http.HandleFunc("/", handler(absDir))
+	http.HandleFunc("/thumbs/", thumbHandler(absDir, filepath.Join(absDir, ".thumbs")))
 
 	addr := "0.0.0.0:" + *port
 	log.Printf("Serving %s at http://%s", absDir, addr)
