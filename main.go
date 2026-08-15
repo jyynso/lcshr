@@ -29,7 +29,7 @@ type Breadcrumb struct {
 	Path string
 }
 
-//go:embed tmplt.gohtml
+//go:embed tmplt.html
 var tmpltHTML string
 
 var tmpl = template.Must(template.New("index").Funcs(template.FuncMap{
