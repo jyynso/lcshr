@@ -17,6 +17,7 @@ type FileEntry struct {
 	Name    string
 	IsImage bool
 	IsVideo bool
+	IsDir   bool
 	ModTime time.Time
 }
 
@@ -63,6 +64,14 @@ var tmpl = template.Must(template.New("index").Parse(`
     display: flex;
     flex-direction: column;
     gap: 4px;
+  }
+  .item .icon {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    padding: 20%;
+    border-radius: 8px;
+    background: #1c1c1c;
+    display: block;
   }
 
   @media (max-width: 600px) {
@@ -128,10 +137,20 @@ var tmpl = template.Must(template.New("index").Parse(`
 </head>
 <body>
 <h2>{{.Title}}</h2>
+
+<select onchange="location.href='?sort='+this.value">
+  <option value="name">Name</option>
+  <option value="date">Date Modified</option>
+</select>
+
 <div class="grid">
 {{range $i, $f := .Files}}
   <div class="item">
-    {{if $f.IsImage}}
+    {{if $f.IsDir}}
+      <a href="{{$f.Name}}/">
+        <svg viewBox="0 0 24 24" class="icon" fill="#e8b84b"><path d="M10 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>
+      </a>
+    {{else if $f.IsImage}}
       <img src="{{$f.Name}}" loading="lazy" onclick="openLightbox('{{$f.Name}}')">
     {{else if $f.IsVideo}}
       <img src="/thumbs/{{$f.Name}}.jpg" muted onclick="openLightbox('{{$f.Name}}')">
@@ -149,11 +168,6 @@ var tmpl = template.Must(template.New("index").Parse(`
   <div class="nav next" onclick="navigate(1)">&#10095;</div>
   <span class="name" id="lightbox-name"></span>
 </div>
-
-<select onchange="location.href='?sort='+this.value">
-  <option value="name">Name</option>
-  <option value="date">Date Modified</option>
-</select>
 
 <script>
   const items = [{{range .Files}}{{if or .IsImage .IsVideo}}{name:"{{.Name}}", video:{{.IsVideo}}},{{end}}{{end}}];
@@ -260,6 +274,7 @@ func handler(root string) http.HandlerFunc {
 				Name:    e.Name(),
 				IsImage: imageExts[ext],
 				IsVideo: videoExts[ext],
+				IsDir:   e.IsDir(),
 				ModTime: info.ModTime(),
 			})
 		}
