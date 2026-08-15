@@ -39,12 +39,10 @@
     border-bottom: 1px solid var(--border);
   }
 
-  h2 {
-    font-size: 1.25rem;
-    font-weight: 600;
-    margin: 0;
-    letter-spacing: -0.01em;
-  }
+  h2 { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; }
+  .crumb { color: var(--text); text-decoration: none; }
+  .crumb:hover { color: var(--accent); }
+  .crumb-sep { color: var(--text-dim); margin: 0 2px; }
 
   .sort-toggle {
     font-size: 0.85rem;
@@ -184,7 +182,13 @@
 </head>
 <body>
 <header>
-  <h2>{{.Title}}</h2>
+  <h2>
+    <a href="/" class="crumb">{{.Title}}</a>
+    {{range .Breadcrumbs}}
+      <span class="crumb-sep">/</span>
+      <a href="{{.Path}}/" class="crumb">{{.Name}}</a>
+    {{end}}
+  </h2>
   <div class="sort-toggle">
     Sort:
     <a href="?sort=name" class="{{if ne .Sort "date"}}active{{end}}">Name</a>

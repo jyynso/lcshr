@@ -23,6 +23,11 @@ type FileEntry struct {
 	ModTime time.Time
 }
 
+type Breadcrumb struct {
+	Name string
+	Path string
+}
+
 //go:embed tmplt.html
 var tmpltHTML string
 
@@ -91,11 +96,23 @@ func handler(root string) http.HandlerFunc {
 			})
 		}
 
+		urlPath := strings.Trim(r.URL.Path, "/")
+		var crumbs []Breadcrumb
+		if urlPath != "" {
+			parts := strings.Split(urlPath, "/")
+			accum := ""
+			for _, p := range parts {
+				accum += "/" + p
+				crumbs = append(crumbs, Breadcrumb{Name: p, Path: accum})
+			}
+		}
+
 		tmpl.Execute(w, map[string]interface{}{
-			"Title":     filepath.Base(root),
-			"Files":     files,
-			"Sort":      sortBy,
-			"ItemsJSON": template.JS(itemsJSON),
+			"Title":       filepath.Base(root),
+			"Files":       files,
+			"Sort":        sortBy,
+			"ItemsJSON":   template.JS(itemsJSON),
+			"Breadcrumbs": crumbs,
 		})
 	}
 }
