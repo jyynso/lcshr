@@ -222,19 +222,19 @@
 {{range $i, $f := .Files}}
   <div class="item">
     {{if $f.IsDir}}
-      <a href="{{$f.Name}}/">
+      <a href="{{urlenc $f.Name}}/">
         <svg viewBox="0 0 24 24" class="icon" fill="var(--folder)"><path d="M10 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>
       </a>
     {{else if $f.IsImage}}
-      <img src="{{$f.Name}}" loading="lazy" onclick="openLightbox('{{$f.Name}}')">
+      <img src="{{urlenc $f.Name}}" loading="lazy" onclick="openLightbox('{{$f.Name}}')">
     {{else if $f.IsVideo}}
-      <img src="/thumbs/{{if $.CurrentPath}}{{$.CurrentPath}}/{{end}}{{$f.Name}}.jpg" loading="lazy" onclick="openLightbox('{{$f.Name}}')">
+      <img src="/thumbs/{{if $.CurrentPath}}{{$.CurrentPath}}/{{end}}{{urlenc $f.Name}}.jpg" loading="lazy" onclick="openLightbox('{{$f.Name}}')">
     {{else}}
-      <a href="{{$f.Name}}">
+      <a href="{{urlenc $f.Name}}">
         <svg viewBox="0 0 24 24" class="icon" fill="var(--text-dim)"><path d="M6 2h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm8 1.5V8h4.5L14 3.5z"/></svg>
       </a>
     {{end}}
-    <a class="filename" href="{{$f.Name}}{{if $f.IsDir}}/{{end}}">{{$f.Name}}</a>
+    <a class="filename" href="{{urlenc $f.Name}}{{if $f.IsDir}}/{{end}}">{{$f.Name}}</a>
   </div>
 {{end}}
 </div>
@@ -289,6 +289,7 @@
     document.getElementById('lightbox').classList.remove('open');
     document.getElementById('lightbox-video').pause();
   }
+
   function updateImage() {
     const item = items[currentIndex];
     const img = document.getElementById('lightbox-img');
@@ -297,15 +298,16 @@
     if (item.video) {
       img.style.display = 'none';
       vid.style.display = 'block';
-      vid.src = item.name;
+      vid.src = encodeURIComponent(item.name);
       vid.play();
     } else {
       vid.style.display = 'none';
       img.style.display = 'block';
-      img.src = item.name;
+      img.src = encodeURIComponent(item.name);
     }
     document.getElementById('lightbox-name').textContent = item.name;
   }
+
   function navigate(dir) {
     currentIndex = (currentIndex + dir + items.length) % items.length;
     updateImage();

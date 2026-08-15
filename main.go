@@ -7,6 +7,7 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -31,7 +32,9 @@ type Breadcrumb struct {
 //go:embed tmplt.html
 var tmpltHTML string
 
-var tmpl = template.Must(template.New("index").Parse(tmpltHTML))
+var tmpl = template.Must(template.New("index").Funcs(template.FuncMap{
+	"urlenc": url.PathEscape,
+}).Parse(tmpltHTML))
 
 var imageExts = map[string]bool{
 	".png": true, ".jpg": true, ".jpeg": true, ".gif": true, ".webp": true,
