@@ -2,60 +2,124 @@
 <html>
 <head>
 <meta charset="UTF-8">
+<link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMiIgaGVpZ2h0PSIzMiIgZmlsbD0iI2ZjZjdmNyIgdmlld0JveD0iMCAwIDI1NiAyNTYiPjxwYXRoIGQ9Ik0xMjgsMjRBMTA0LDEwNCwwLDEsMCwyMzIsMTI4LDEwNC4xMSwxMDQuMTEsMCwwLDAsMTI4LDI0Wm0wLDE5MmE4OCw4OCwwLDEsMSw4OC04OEE4OC4xLDg4LjEsMCwwLDEsMTI4LDIxNlpNODAsMTA4YTEyLDEyLDAsMSwxLDEyLDEyQTEyLDEyLDAsMCwxLDgwLDEwOFptMTA0LDBhOCw4LDAsMCwxLTgsOEgxNTJhOCw4LDAsMCwxLDAtMTZoMjRBOCw4LDAsMCwxLDE4NCwxMDhabS05LjA4LDQ4Yy0xMC4yOSwxNy43OS0yNy4zOSwyOC00Ni45MiwyOHMtMzYuNjMtMTAuMi00Ni45My0yOGE4LDgsMCwxLDEsMTMuODYtOGM3LjQ2LDEyLjkxLDE5LjIsMjAsMzMuMDcsMjBzMjUuNjEtNy4xLDMzLjA4LTIwYTgsOCwwLDEsMSwxMy44NCw4WiI+PC9wYXRoPjwvc3ZnPg=="/>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{{.Title}}</title>
 <style>
-  * { box-sizing: border-box; }
-  body {
-    font-family: sans-serif;
-    background: #111;
-    color: #eee;
-    padding: 16px;
-    margin: 0;
+  :root {
+    --bg: #0d0d0f;
+    --panel: #17171a;
+    --border: #2a2a2e;
+    --text: #ececec;
+    --text-dim: #8a8a92;
+    --accent: #6ea8fe;
+    --folder: #e8b84b;
+    --radius: 10px;
   }
-  h2 { font-size: 1.2rem; margin-bottom: 16px; }
+
+  * { box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    margin: 0;
+    padding: 24px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px 16px;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  h2 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0;
+    letter-spacing: -0.01em;
+  }
+
+  .sort-toggle {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .sort-toggle a {
+    color: var(--text-dim);
+    text-decoration: none;
+    padding: 4px 10px;
+    border-radius: 6px;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+  .sort-toggle a:hover { color: var(--text); background: var(--panel); }
+  .sort-toggle a.active {
+    color: var(--bg);
+    background: var(--accent);
+    font-weight: 600;
+  }
+  .sort-toggle .sep { display: none; }
 
   .grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-    gap: 12px;
+    gap: 14px;
   }
 
-  .item img,
-  .item video {
-    width: 100%;
-    aspect-ratio: 1 / 1;
-    object-fit: cover;
-    border-radius: 8px;
-    display: block;
-    cursor: pointer;
-  }
-  .item a.filename {
-    color: #eee;
-    text-decoration: none;
-    font-size: 0.8rem;
-    word-break: break-word;
-  }
   .item {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 6px;
   }
+
+  .item img,
+  .item video,
   .item .icon {
     width: 100%;
     aspect-ratio: 1 / 1;
-    padding: 20%;
-    border-radius: 8px;
-    background: #1c1c1c;
+    object-fit: cover;
+    border-radius: var(--radius);
     display: block;
+    cursor: pointer;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    transition: border-color 0.15s ease, transform 0.1s ease;
   }
-  .sort-toggle a, u {
+  .item img:hover,
+  .item .icon:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+  }
+
+  .item .icon {
+    padding: 22%;
+    cursor: default;
+  }
+  .item .icon:hover { transform: none; border-color: var(--border); }
+  a:has(> .icon) { text-decoration: none; }
+
+  .item a.filename {
+    color: var(--text-dim);
     text-decoration: none;
+    font-size: 0.78rem;
+    word-break: break-word;
+    line-height: 1.3;
+    padding: 0 2px;
   }
+  .item a.filename:hover { color: var(--text); }
 
   @media (max-width: 600px) {
     .grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
-    body { padding: 10px; }
+    body { padding: 14px; }
+    header { flex-direction: column; align-items: flex-start; }
   }
   @media (min-width: 1200px) {
     .grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
@@ -65,7 +129,7 @@
     display: none;
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.84);
+    background: rgba(0,0,0,0.92);
     z-index: 1000;
     touch-action: pan-y;
     user-select: none;
@@ -80,12 +144,15 @@
   #lightbox video { max-width: 100%; max-height: 100%; }
   #lightbox .close {
     position: absolute;
-    top: 16px; right: 20px;
+    top: 20px; right: 24px;
     font-size: 2rem;
-    color: #eee;
+    color: var(--text);
     cursor: pointer;
     z-index: 1001;
+    opacity: 0.7;
+    transition: opacity 0.15s ease;
   }
+  #lightbox .close:hover { opacity: 1; }
   #lightbox-img { transition: transform 0.15s ease; cursor: zoom-in; }
   #lightbox-img.zoomed { object-fit: none; max-width: none; max-height: none; cursor: zoom-out; }
   #lightbox .nav {
@@ -95,48 +162,53 @@
     display: flex;
     align-items: center;
     font-size: 2.5rem;
-    color: rgba(255,255,255,0.6);
+    color: rgba(255,255,255,0.5);
     cursor: pointer;
     user-select: none;
+    transition: color 0.15s ease;
   }
+  #lightbox .nav:hover { color: rgba(255,255,255,0.9); }
   #lightbox .prev { left: 0; justify-content: flex-start; padding-left: 12px; }
   #lightbox .next { right: 0; justify-content: flex-end; padding-right: 12px; }
   #lightbox .name {
     position: absolute;
-    bottom: 16px;
+    bottom: 18px;
     left: 0;
     right: 0;
     text-align: center;
-    font-size: 0.9rem;
-    color: #eee;
+    font-size: 0.85rem;
+    color: var(--text-dim);
     z-index: 1001;
   }
-
 </style>
 </head>
 <body>
-<h2>{{.Title}}</h2>
-
-<div class="sort-toggle">
-  Sort by:
-  <a href="?sort=name" class="{{if ne .Sort "date"}}active{{end}}">Name</a>
-  ·
-  <a href="?sort=date" class="{{if eq .Sort "date"}}active{{end}}">Date</a>
-</div>
+<header>
+  <h2>{{.Title}}</h2>
+  <div class="sort-toggle">
+    Sort:
+    <a href="?sort=name" class="{{if ne .Sort "date"}}active{{end}}">Name</a>
+    <a href="?sort=date" class="{{if eq .Sort "date"}}active{{end}}">Date</a>
+  </div>
+</header>
 
 <div class="grid">
 {{range $i, $f := .Files}}
   <div class="item">
     {{if $f.IsDir}}
       <a href="{{$f.Name}}/">
-        <svg viewBox="0 0 24 24" class="icon" fill="#e8b84b"><path d="M10 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>
+        <svg viewBox="0 0 24 24" class="icon" fill="var(--folder)"><path d="M10 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>
       </a>
     {{else if $f.IsImage}}
       <img src="{{$f.Name}}" loading="lazy" onclick="openLightbox('{{$f.Name}}')">
     {{else if $f.IsVideo}}
       <img src="/thumbs/{{$f.Name}}.jpg" muted onclick="openLightbox('{{$f.Name}}')">
+    {{else}}
+      <a href="{{$f.Name}}">
+        <svg viewBox="0 0 24 24" class="icon" fill="var(--text-dim)"><path d="M6 2h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm8 1.5V8h4.5L14 3.5z"/></svg>
+      </a>
     {{end}}
-    <a class="filename" href="{{$f.Name}}">{{$f.Name}}</a>
+    <a class="filename" href="{{$f.Name}}{{if $f.IsDir}}/{{end}}">{{$f.Name}}</a>
   </div>
 {{end}}
 </div>
