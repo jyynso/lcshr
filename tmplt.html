@@ -228,7 +228,7 @@
     {{else if $f.IsImage}}
       <img src="{{$f.Name}}" loading="lazy" onclick="openLightbox('{{$f.Name}}')">
     {{else if $f.IsVideo}}
-      <img src="/thumbs/{{$f.Name}}.jpg" muted onclick="openLightbox('{{$f.Name}}')">
+      <img src="/thumbs/{{if $.CurrentPath}}{{$.CurrentPath}}/{{end}}{{$f.Name}}.jpg" loading="lazy" onclick="openLightbox('{{$f.Name}}')">
     {{else}}
       <a href="{{$f.Name}}">
         <svg viewBox="0 0 24 24" class="icon" fill="var(--text-dim)"><path d="M6 2h9l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2zm8 1.5V8h4.5L14 3.5z"/></svg>
