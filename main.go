@@ -41,6 +41,8 @@ var videoExts = map[string]bool{
 	".mp4": true, ".webm": true, ".mov": true, ".mkv": true,
 }
 
+var thumbSem = make(chan struct{}, 4)
+
 func handler(root string) http.HandlerFunc {
 	fs := http.FileServer(http.Dir(root))
 
@@ -113,6 +115,7 @@ func handler(root string) http.HandlerFunc {
 			"Sort":        sortBy,
 			"ItemsJSON":   template.JS(itemsJSON),
 			"Breadcrumbs": crumbs,
+			"CurrentPath": urlPath,
 		})
 	}
 }
@@ -124,10 +127,16 @@ func thumbHandler(root, thumbDir string) http.HandlerFunc {
 		thumbPath := filepath.Join(thumbDir, name)
 
 		if _, err := os.Stat(thumbPath); os.IsNotExist(err) {
-			os.MkdirAll(thumbDir, 0755)
+			os.MkdirAll(filepath.Dir(thumbPath), 0755)
+
+			thumbSem <- struct{}{}
+			defer func() { <-thumbSem }()
+
 			cmd := exec.Command("ffmpeg", "-ss", "00:00:01", "-i", videoPath,
-				"-frames:v", "1", "-vf", "scale=320:-1", thumbPath)
-			if err := cmd.Run(); err != nil {
+				"-frames:v", "1", "-vf", "scale=320:-1", "-y", thumbPath)
+			out, err := cmd.CombinedOutput()
+			if err != nil {
+				log.Printf("ffmpeg failed for %s: %v\n%s", videoPath, err, out)
 				http.Error(w, "thumb generation failed", 500)
 				return
 			}
