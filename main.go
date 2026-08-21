@@ -22,6 +22,7 @@ type FileEntry struct {
 	IsVideo bool
 	IsDir   bool
 	ModTime time.Time
+	Size    int64
 }
 
 type Breadcrumb struct {
@@ -75,6 +76,7 @@ func handler(root string) http.HandlerFunc {
 				IsVideo: videoExts[ext],
 				IsDir:   e.IsDir(),
 				ModTime: info.ModTime(),
+				Size:    info.Size(),
 			})
 		}
 
@@ -91,6 +93,10 @@ func handler(root string) http.HandlerFunc {
 
 		sortBy := r.URL.Query().Get("sort")
 		switch sortBy {
+		case "size":
+			sort.Slice(files, func(i, j int) bool {
+				return (files[i].Size > files[j].Size)
+			})
 		case "date":
 			sort.Slice(files, func(i, j int) bool {
 				return files[i].ModTime.After(files[j].ModTime)

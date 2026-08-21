@@ -212,8 +212,9 @@
   </h2>
   <div class="sort-toggle">
     Sort:
-      <a href="?sort=name" class="{{if ne .Sort "date"}}active{{end}}">Name</a>
+      <a href="?sort=name" class="{{if eq .Sort "name"}}active{{end}}">Name</a>
       <a href="?sort=date" class="{{if eq .Sort "date"}}active{{end}}">Date</a>
+      <a href="?sort=size" class="{{if eq .Sort "size"}}active{{end}}">Size</a>
       <button id="theme-toggle" class="theme-btn" onclick="toggleTheme()"></button>
   </div>
 </header>
